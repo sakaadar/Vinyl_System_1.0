@@ -3,24 +3,75 @@ package via.vinylsystem.client;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.time.Duration;
 
 public class DirectoryLookupClient {
-  private final InetAddress address;
-  private final int port;
 
-  public DirectoryLookupClient(String host, int port) throws Exception {
-    this.address = InetAddress.getByName(host);
-    this.port = port;
+  public static class LookupResponse {
+    private final boolean ok;
+    private final String ip;
+    private final long ttlSeconds;
+    private final String errorCode;
+
+    private LookupResponse(boolean ok, String ip, long ttlSeconds, String errorCode) {
+      this.ok = ok;
+      this.ip = ip;
+      this.ttlSeconds = ttlSeconds;
+      this.errorCode = errorCode;
+    }
+    public boolean isOk() { return ok; }
+    public String getIp() { return ip; }
+    public long getTtlSeconds() { return ttlSeconds; }
+    public String getErrorCode() { return errorCode; }
+    public String toString() {
+      return ok ? ("OK ip=" + ip + " ttl=" + ttlSeconds + "s")
+                : ("ERROR code=" + errorCode);
+    }
   }
 
-  public String lookup(String name) throws Exception {
+  private final InetAddress directoryAddress;
+  private final int directoryPort;
+  private final int timeoutMillis;
+
+  public DirectoryLookupClient(String host, int port) throws Exception {
+    this(host, port, 2000);
+  }
+
+  public DirectoryLookupClient(String host, int port, int timeoutMillis) throws Exception {
+    this.directoryAddress = InetAddress.getByName(host);
+    this.directoryPort = port;
+    this.timeoutMillis = timeoutMillis;
+  }
+
+  public LookupResponse lookup(String name) throws Exception {
     try (DatagramSocket socket = new DatagramSocket()) {
+      socket.setSoTimeout(timeoutMillis);
       byte[] out = ("LOOKUP " + name).getBytes();
-      socket.send(new DatagramPacket(out, out.length, address, port));
+      DatagramPacket req = new DatagramPacket(out, out.length, directoryAddress, directoryPort);
+      socket.send(req);
+
       byte[] buf = new byte[512];
       DatagramPacket resp = new DatagramPacket(buf, buf.length);
       socket.receive(resp);
-      return new String(resp.getData(), 0, resp.getLength());
+
+      String line = new String(resp.getData(), 0, resp.getLength()).trim();
+      String[] parts = line.split("\\s+");
+      if (parts.length >= 1 && "OK".equalsIgnoreCase(parts[0])) {
+        if (parts.length >= 3) {
+          String ip = parts[1];
+          long ttl = parseLongSafe(parts[2], 0);
+            return new LookupResponse(true, ip, ttl, null);
+        }
+        return new LookupResponse(true, parts.length >= 2 ? parts[1] : null, 0, null);
+      } else if (parts.length >= 2 && "ERROR".equalsIgnoreCase(parts[0])) {
+        return new LookupResponse(false, null, 0, parts[1]);
+      }
+      return new LookupResponse(false, null, 0, "000001"); // fallback UNKNOWN_CMD
     }
   }
+
+  private long parseLongSafe(String s, long def) {
+    try { return Long.parseLong(s); } catch (NumberFormatException e) { return def; }
+  }
+
 }
