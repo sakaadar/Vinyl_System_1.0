@@ -25,9 +25,9 @@ public class DirectoryUdpServer extends Thread {
         try {
           byte[] buf = new byte[512];
           DatagramPacket pkt = new DatagramPacket(buf, buf.length);
-          socket.receive(pkt);
+            socket.receive(pkt);
           String request = new String(pkt.getData(), 0, pkt.getLength()).trim();
-          String response = handle(request, pkt.getAddress().getHostAddress());
+          String response = handle(request);
           byte[] out = response.getBytes();
           socket.send(new DatagramPacket(out, out.length, pkt.getAddress(), pkt.getPort()));
         } catch (IOException e) {
@@ -41,14 +41,26 @@ public class DirectoryUdpServer extends Thread {
     }
   }
 
-  private String handle(String req, String ip) {
+  private String handle(String req) {
     String[] parts = req.split("\\s+", 2);
-    if (parts.length == 2 && "REGISTER".equalsIgnoreCase(parts[0])) {
-      try {
-        long ttl = registryService.register(parts[1], ip);
-        return "OK " + ttl;
-      } catch (StatusExeption e) {
-        return "ERROR " + e.getCode();
+    if (parts.length == 2) {
+      String cmd = parts[0].toUpperCase();
+      String arg = parts[1];
+      switch (cmd) {
+        case "REGISTER":
+          try {
+            long ttl = registryService.register(arg, "0.0.0.0"); // replace with sender IP if needed
+            return "OK " + ttl;
+          } catch (StatusExeption e) {
+            return "ERROR " + e.getCode();
+          }
+        case "LOOKUP":
+          try {
+            RegistryService.LookupResult res = registryService.lookup(arg);
+            return "OK " + res.getIp() + " " + res.getTtlSeconds();
+          } catch (StatusExeption e) {
+            return "ERROR " + e.getCode();
+          }
       }
     }
     return "ERROR " + StatusCodes.UNKNOWN_CMD;

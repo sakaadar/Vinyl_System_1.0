@@ -55,8 +55,10 @@ public class DirectoryTcpServer extends Thread {
     public void run() {
       try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
            PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
-        String req = in.readLine();
-        if (req != null) out.println(handle(req, socket.getInetAddress().getHostAddress()));
+        String req;
+        while ((req = in.readLine()) != null) {
+          out.println(handle(req));
+        }
       } catch (IOException e) {
         System.err.println("Client handler: " + e.getMessage());
       } finally {
@@ -64,14 +66,26 @@ public class DirectoryTcpServer extends Thread {
       }
     }
 
-    private String handle(String req, String ip) {
+    private String handle(String req) {
       String[] parts = req.split("\\s+", 2);
-      if (parts.length == 2 && "REGISTER".equalsIgnoreCase(parts[0])) {
-        try {
-          long ttl = registryService.register(parts[1], ip);
-            return "OK " + ttl;
-        } catch (StatusExeption e) {
-          return "ERROR " + e.getCode();
+      if (parts.length == 2) {
+        String cmd = parts[0].toUpperCase();
+        String arg = parts[1];
+        switch (cmd) {
+          case "REGISTER":
+            try {
+              long ttl = registryService.register(arg, socket.getInetAddress().getHostAddress());
+              return "OK " + ttl;
+            } catch (StatusExeption e) {
+              return "ERROR " + e.getCode();
+            }
+          case "LOOKUP":
+            try {
+              RegistryService.LookupResult res = registryService.lookup(arg);
+              return "OK " + res.getIp() + " " + res.getTtlSeconds();
+            } catch (StatusExeption e) {
+              return "ERROR " + e.getCode();
+            }
         }
       }
       return "ERROR " + StatusCodes.UNKNOWN_CMD;

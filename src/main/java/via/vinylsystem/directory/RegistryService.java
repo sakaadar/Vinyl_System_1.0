@@ -31,6 +31,31 @@ public class RegistryService {
     return defaultTtlSec;
   }
 
+  public synchronized LookupResult lookup(String name) throws StatusExeption {
+    if (!validName(name)) throw new StatusExeption("000010"); // invalid name
+    long now = clock.millis();
+    Registration reg = byName.get(name);
+    if (reg == null || reg.isExpired(now)) {
+      if (reg != null && reg.isExpired(now)) {
+        byName.remove(name);
+      }
+      throw new StatusExeption(StatusCodes.NONE_REGISTERED);
+    }
+    long ttl = reg.ttlSeconds(now);
+    return new LookupResult(reg.getIp(), ttl);
+  }
+
+  public static class LookupResult {
+    private final String ip;
+    private final long ttlSeconds;
+    public LookupResult(String ip, long ttlSeconds) {
+      this.ip = ip;
+      this.ttlSeconds = ttlSeconds;
+    }
+    public String getIp() { return ip; }
+    public long getTtlSeconds() { return ttlSeconds; }
+  }
+
   private boolean validName(String name) {
     return name != null && !name.isEmpty() && name.length() <= 30 &&
         name.matches(".*\\.group[0-9]+\\.pro2(x|y)?$");
