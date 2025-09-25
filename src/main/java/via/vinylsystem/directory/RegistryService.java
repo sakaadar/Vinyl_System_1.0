@@ -2,81 +2,48 @@ package via.vinylsystem.directory;
 
 import java.time.Clock;
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class RegistryService
-{
-  private long defaultTtlSec;
-  private Clock clock;
-  private Map<String, Registration> byName; //Registration
-  private Map<String,String> nameByIp; // ip/Name
-  RegistryService(long defaultTtlSec, Clock clock)
-  {
+public class RegistryService {
+  private static final String INVALID_NAME_CODE = "000010";
+  private static final String INVALID_IP_CODE = "000011";
+
+  private final long defaultTtlSec;
+  private final Clock clock;
+  private final Map<String, Registration> byName;
+
+  public RegistryService(long defaultTtlSec, Clock clock) {
     this.defaultTtlSec = defaultTtlSec;
     this.clock = clock;
+    this.byName = new ConcurrentHashMap<>();
   }
-  public synchronized long register(String name, String ip)
-      throws StatusExeption
-  {
-    if(!validName(name)){
-      throw new StatusExeption(StatusCodes.UNKNOWN_CMD);
-    }
-    if(ip == null || !validIPv4(ip))
-    {
-      throw new StatusExeption(StatusCodes.UNKNOWN_CMD);
-    }
+
+  public synchronized long register(String name, String ip) throws StatusExeption {
+    if (!validName(name)) throw new StatusExeption(INVALID_NAME_CODE);
+    if (!validIPv4(ip)) throw new StatusExeption(INVALID_IP_CODE);
     Registration existing = byName.get(name);
-    if(existing != null && !existing.getIp().equals(ip))
-    {
+    if (existing != null && !existing.getIp().equals(ip)) {
       throw new StatusExeption(StatusCodes.NAME_ON_OTHER_IP);
     }
-    //Opret/forny registrering
-
-    Long now = clock.millis();
-
-    Long expiresAt = now + defaultTtlSec * 1000;
-
-    Registration reg = new Registration(name, ip, expiresAt);
-
-    byName.put(name,reg);
-    nameByIp.put(ip,name);
-
-    //Retunere TTL i sekunder
+    long now = clock.millis();
+    long expires = now + defaultTtlSec * 1000;
+    byName.put(name, new Registration(name, ip, expires));
     return defaultTtlSec;
-
   }
 
-  public boolean validName(String name)
-  {
-    if(name.length() > 30 || name.isEmpty())
-    {
-      return false;
-    }
-    else
-      return name.matches(".*\\.group[0-9]+\\.pro2(x|y)?$");
+  private boolean validName(String name) {
+    return name != null && !name.isEmpty() && name.length() <= 30 &&
+        name.matches(".*\\.group[0-9]+\\.pro2(x|y)?$");
   }
 
-  public boolean validIPv4(String ip)
-  {
-    if(ip == null || ip.isEmpty())
-    {
-      return false;
-    }
-    String[] parts = ip.split("\\.");
-    if(parts.length != 4){
-      return false;
-    }
-    for(String part : parts)
-    {
-      if(!part.matches("\\d+")) // \\d betyder "en eller flere cifre"
-      {
-        return false;
-      }
-      int value = Integer.parseInt(part);
-      if(value < 0 || value > 255)
-      {
-        return false;
-      }
+  private boolean validIPv4(String ip) {
+    if (ip == null) return false;
+    String[] p = ip.split("\\.");
+    if (p.length != 4) return false;
+    for (String s : p) {
+      if (!s.matches("\\d+")) return false;
+      int v = Integer.parseInt(s);
+      if (v < 0 || v > 255) return false;
     }
     return true;
   }
