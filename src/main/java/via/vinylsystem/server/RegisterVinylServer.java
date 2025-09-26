@@ -1,4 +1,4 @@
-package via.vinylsystem.client;
+package via.vinylsystem.server;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
