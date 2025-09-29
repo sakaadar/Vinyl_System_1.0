@@ -1,13 +1,11 @@
 package via.vinylsystem.directory;
 
-import com.cedarsoftware.io.JsonWriter;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
@@ -15,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class DirectoryTcpServer
+public class DirectoryTCPServer
 {
   private int port;
   private static final Gson gson = new Gson(); //Konvertere til JSON
@@ -27,7 +25,7 @@ public class DirectoryTcpServer
   private static final int READ_TIMEOUT_MS = 5000;
   private static final int  MAX_LINE_LEN = 2048;
 
-  public DirectoryTcpServer(int port, RegistryService registry)
+  public DirectoryTCPServer(int port, RegistryService registry)
   {
     this.port = port;
     this.registry = registry;
