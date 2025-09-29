@@ -49,7 +49,7 @@ public class DirectoryUdpServer extends Thread {
       switch (cmd) {
         case "REGISTER":
           try {
-            long ttl = registryService.register(arg, "0.0.0.0"); // replace with sender IP if needed
+            long ttl = registryService.register(arg, "0.0.0.0"); //
             return "OK " + ttl;
           } catch (StatusExeption e) {
             return "ERROR " + e.getCode();
