@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static via.vinylsystem.Util.JsonUtils.format6;
+import static via.vinylsystem.Util.JsonUtils.tryParseJsonMap;
+
 public class DirectoryTCPServer
 {
   private int port;
@@ -85,7 +88,6 @@ public class DirectoryTCPServer
         sendstatus(writer,StatusCodes.UNKNOWN_CMD);
         return;
       }
-
       //Parse JSON -> Map
       Map<String, String> req = tryParseJsonMap(line);
       if(req == null){
@@ -180,29 +182,6 @@ public class DirectoryTCPServer
     }
   }
 
-  private Map<String,String> tryParseJsonMap(String text)
-  {
-    try
-    {
-      @SuppressWarnings("unchecked") Map<String, Object> raw = gson.fromJson(
-          text, Map.class);
-      if (raw == null)
-        return null;
-
-      //Konverter værdier til strenge
-      Map<String, String> out = new java.util.HashMap<>();
-      for (Map.Entry<String, Object> entry : raw.entrySet())
-      {
-        out.put(entry.getKey(),
-            entry.getValue() == null ? null : String.valueOf(entry.getValue()));
-
-      }
-      return out;
-    } catch (JsonSyntaxException ex)
-    {
-      return null;
-    }
-  }
   private void sendTtl(BufferedWriter writer,  long ttlSec) throws IOException
   {
     String ttlStr = format6(ttlSec);
@@ -212,9 +191,6 @@ public class DirectoryTCPServer
     writeJsonLine(writer, map);
   }
 
-  private String format6(long n)
-  {
-    return String.format("%06d",n);
-  }
+
 
 }
