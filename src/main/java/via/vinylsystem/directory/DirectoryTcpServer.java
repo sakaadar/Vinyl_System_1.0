@@ -2,6 +2,7 @@ package via.vinylsystem.directory;
 
 import com.cedarsoftware.io.JsonWriter;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -9,6 +10,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +23,9 @@ public class DirectoryTcpServer
   private ServerSocket serverSocket;
   private ExecutorService executor;
   private boolean running;
+
+  private static final int READ_TIMEOUT_MS = 5000;
+  private static final int  MAX_LINE_LEN = 2048;
 
   public DirectoryTcpServer(int port, RegistryService registry)
   {
@@ -76,12 +81,47 @@ public class DirectoryTcpServer
       BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
       BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
 
-      String line = reader.readLine();
+      String line = readLineWithLimit(reader, MAX_LINE_LEN);
       if(line == null)
       {
-       // sendstatus(writer,);
+        sendstatus(writer,StatusCodes.UNKNOWN_CMD);
+        return;
       }
 
+      //Parse JSON -> Map
+      Map<String, String> req = tryParseJsonMap(line);
+      if(req == null){
+        sendstatus(writer,StatusCodes.UNKNOWN_CMD);
+      }
+      //Extract fields + IP
+      String cmd = req.get("CMD");
+      String name = req.get("NAME");
+      String ip = socket.getInetAddress().getHostAddress();
+
+      if(cmd == null || name == null){
+        sendstatus(writer, StatusCodes.UNKNOWN_CMD);
+      }
+      cmd = cmd.toUpperCase(Locale.ROOT);
+
+      //Dispatch to service
+      try{
+        if("REGISTER".equals(cmd)){
+          long ttl = registry.register(name,ip);
+          sendTtl(writer,ttl);
+        }
+        else if ("UPDATE".equals(cmd))
+        {
+          long ttl = registry.update(name, ip);
+          sendTtl(writer, ttl);
+        }
+        else{
+          sendstatus(writer, StatusCodes.UNKNOWN_CMD);
+        }
+      }
+      catch (StatusExeption se)
+      {
+        sendstatus(writer, se.getCode());
+      }
     }
     catch (IOException e)
     {
@@ -142,5 +182,41 @@ public class DirectoryTcpServer
     }
   }
 
+  private Map<String,String> tryParseJsonMap(String text)
+  {
+    try
+    {
+      @SuppressWarnings("unchecked") Map<String, Object> raw = gson.fromJson(
+          text, Map.class);
+      if (raw == null)
+        return null;
+
+      //Konverter værdier til strenge
+      Map<String, String> out = new java.util.HashMap<>();
+      for (Map.Entry<String, Object> entry : raw.entrySet())
+      {
+        out.put(entry.getKey(),
+            entry.getValue() == null ? null : String.valueOf(entry.getValue()));
+
+      }
+      return out;
+    } catch (JsonSyntaxException ex)
+    {
+      return null;
+    }
+  }
+  private void sendTtl(BufferedWriter writer,  long ttlSec) throws IOException
+  {
+    String ttlStr = format6(ttlSec);
+    Map<String,String> map = new HashMap<>();
+    map.put("TTL", ttlStr);
+
+    writeJsonLine(writer, map);
+  }
+
+  private String format6(long n)
+  {
+    return String.format("%06d",n);
+  }
 
 }
