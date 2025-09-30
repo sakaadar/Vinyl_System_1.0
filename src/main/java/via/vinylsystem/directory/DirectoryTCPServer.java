@@ -13,8 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static via.vinylsystem.Util.JsonUtils.format6;
-import static via.vinylsystem.Util.JsonUtils.tryParseJsonMap;
+import static via.vinylsystem.Util.JsonUtils.*;
 
 public class DirectoryTCPServer
 {
@@ -140,48 +139,6 @@ public class DirectoryTCPServer
    writeJsonLine(writer, payload);
   }
 
-  private void writeJsonLine(BufferedWriter writer,  Map<String, String> payload)
-      throws IOException
-  {
-    String json = gson.toJson(payload);
-    writer.write(json);
-    writer.newLine();
-    writer.flush();
-  }
-
-  private void closeSocketCon(Closeable c)
-  {
-    try{
-    if(c != null)
-    {
-      c.close();
-    }
-    }
-    catch (IOException e)
-    {
-      //ignore
-    }
-  }
-  private String readLineWithLimit(BufferedReader reader,long maxLen){
-    try
-    {
-      String line = reader.readLine();
-      if(line == null)
-      {
-        return null;
-      }
-      if(line.length() > maxLen)
-      {
-        return null;
-      }
-      return line.trim();
-    }
-    catch (IOException e)
-    {
-      throw new RuntimeException("Could not read line: "+e);
-    }
-  }
-
   private void sendTtl(BufferedWriter writer,  long ttlSec) throws IOException
   {
     String ttlStr = format6(ttlSec);
@@ -190,7 +147,5 @@ public class DirectoryTCPServer
 
     writeJsonLine(writer, map);
   }
-
-
 
 }

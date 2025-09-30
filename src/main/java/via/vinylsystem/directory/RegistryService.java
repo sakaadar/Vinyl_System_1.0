@@ -1,11 +1,11 @@
 package via.vinylsystem.directory;
 
+import via.vinylsystem.Model.Registration;
+
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class RegistryService
 {

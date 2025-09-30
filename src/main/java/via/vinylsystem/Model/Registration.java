@@ -1,4 +1,4 @@
-package via.vinylsystem.directory;
+package via.vinylsystem.Model;
 
 public class Registration
 {

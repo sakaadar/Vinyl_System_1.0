@@ -1,8 +1,8 @@
 package via.vinylsystem.directory;
 
 import java.io.Closeable;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+
+import via.vinylsystem.Model.Registration;
 import via.vinylsystem.Util.JsonUtils;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class DirectoryUDPServer
     this.port = port;
     this.registry = registry;
   }
-  private void start(){
+  public void start(){
     try
     {
       socket = new DatagramSocket(port);
