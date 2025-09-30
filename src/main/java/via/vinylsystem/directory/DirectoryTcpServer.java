@@ -1,8 +1,12 @@
 package via.vinylsystem.directory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 
 public class DirectoryTcpServer extends Thread {
   private final int port;
@@ -66,43 +70,55 @@ public class DirectoryTcpServer extends Thread {
       }
     }
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private String handle(String req) {
       String[] parts = req.split("\\s+", 2);
+      Map<String, Object> json = new HashMap<>();
       if (parts.length == 2) {
         String cmd = parts[0].toUpperCase();
         String arg = parts[1];
-        switch (cmd) {
-          case "REGISTER":
-            try {
+        try {
+          switch (cmd) {
+            case "REGISTER":
               long ttl = registryService.register(arg, socket.getInetAddress().getHostAddress());
-              return "OK " + ttl;
-            } catch (StatusExeption e) {
-              return "ERROR " + e.getCode();
-            }
-          case "UPDATE":
-            try {
-              long ttl = registryService.update(arg, socket.getInetAddress().getHostAddress());
-              return "OK " + ttl;
-            } catch (StatusExeption e) {
-              return "ERROR " + e.getCode();
-            }
-          case "LOOKUP":
-            try {
+              json.put("status", "OK");
+              json.put("ttl", ttl);
+              break;
+            case "UPDATE":
+              ttl = registryService.update(arg, socket.getInetAddress().getHostAddress());
+              json.put("status", "OK");
+              json.put("ttl", ttl);
+              break;
+            case "LOOKUP":
               LookUpResult res = registryService.lookup(arg);
-              return "OK " + res.getIp() + " " + res.getTtlSeconds();
-            } catch (StatusExeption e) {
-              return "ERROR " + e.getCode();
-            }
-          case "LOOKUP_IP":
-            try {
-              LookUpResult res = registryService.lookupByIp(arg);
-              return "OK " + res.getName() + " " + res.getTtlSeconds();
-            } catch (StatusExeption e) {
-              return "ERROR " + e.getCode();
-            }
+              json.put("status", "OK");
+              json.put("ip", res.getIp());
+              json.put("ttl", res.getTtlSeconds());
+              break;
+            case "LOOKUP_IP":
+              res = registryService.lookupByIp(arg);
+              json.put("status", "OK");
+              json.put("name", res.getName());
+              json.put("ttl", res.getTtlSeconds());
+              break;
+            default:
+              json.put("status", "ERROR");
+              json.put("code", StatusCodes.UNKNOWN_CMD);
+          }
+        } catch (StatusExeption e) {
+          json.put("status", "ERROR");
+          json.put("code", e.getCode());
         }
+      } else {
+        json.put("status", "ERROR");
+        json.put("code", StatusCodes.UNKNOWN_CMD);
       }
-      return "ERROR " + StatusCodes.UNKNOWN_CMD;
+      try {
+        return mapper.writeValueAsString(json);
+      } catch (Exception e) {
+        return "{\"status\":\"ERROR\",\"code\":\"json_error\"}";
+      }
     }
   }
 }
