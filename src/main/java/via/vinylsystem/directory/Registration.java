@@ -2,8 +2,6 @@ package via.vinylsystem.directory;
 
 public class Registration
 {
-  //Registration repræsentere en bestemt Vinyl-Server med et navn som kører
-  //På en bestemt IP og er gyldigt indtil udløbstidspunktet.
 
   private String name;
   private String ip;
@@ -75,5 +73,9 @@ public class Registration
   {
     return "Registration{name= " + name + " , ip=" + ip +
         " , expiresAt=" + expiresAtMillis + "}";
+  }
+
+  public void refreshTtl(long nowMillis, long defaultTtlSec) {
+      this.expiresAtMillis = nowMillis + defaultTtlSec * 1000;
   }
 }

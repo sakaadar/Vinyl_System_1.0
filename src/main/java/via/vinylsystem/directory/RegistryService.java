@@ -31,7 +31,7 @@ public class RegistryService {
     return defaultTtlSec;
   }
 
-  public synchronized LookupResult lookup(String name) throws StatusExeption {
+  public synchronized LookUpResult lookup(String name) throws StatusExeption {
     if (!validName(name)) throw new StatusExeption("000010"); // invalid name
     long now = clock.millis();
     Registration reg = byName.get(name);
@@ -42,19 +42,39 @@ public class RegistryService {
       throw new StatusExeption(StatusCodes.NONE_REGISTERED);
     }
     long ttl = reg.ttlSeconds(now);
-    return new LookupResult(reg.getIp(), ttl);
+    return new LookUpResult(reg.getIp(), reg.getName(), ttl);
   }
 
-  public static class LookupResult {
-    private final String ip;
-    private final long ttlSeconds;
-    public LookupResult(String ip, long ttlSeconds) {
-      this.ip = ip;
-      this.ttlSeconds = ttlSeconds;
+
+    public synchronized LookUpResult lookupByIp(String ip) throws StatusExeption {
+        if (!validIPv4(ip)) throw new StatusExeption("000011"); // invalid IP
+        long now = clock.millis();
+        for (Registration reg : byName.values()) {
+        if (reg.getIp().equals(ip)) {
+            if (reg.isExpired(now)) {
+            byName.remove(reg.getName());
+            throw new StatusExeption(StatusCodes.NONE_REGISTERED);
+            }
+            long ttl = reg.ttlSeconds(now);
+            return new LookUpResult(reg.getName(), reg.getIp(), ttl);
+        }
+        }
+        throw new StatusExeption(StatusCodes.NONE_REGISTERED);
     }
-    public String getIp() { return ip; }
-    public long getTtlSeconds() { return ttlSeconds; }
-  }
+
+    public synchronized long update(String name, String ip) throws StatusExeption {
+        Registration entry = byName.get(name);
+        if (entry == null) {
+            throw new StatusExeption(StatusCodes.UPDATE_UNKNOWN);
+        }
+        if (!entry.getIp().equals(ip)) {
+            throw new StatusExeption(StatusCodes.NAME_ON_OTHER_IP);
+        }
+        long now = clock.millis();
+        entry.refreshTtl(now, defaultTtlSec);
+        return entry.ttlSeconds(now);
+    }
+
 
   private boolean validName(String name) {
     return name != null && !name.isEmpty() && name.length() <= 30 &&
@@ -71,5 +91,8 @@ public class RegistryService {
       if (v < 0 || v > 255) return false;
     }
     return true;
-  }
+  };
+
+
+
 }

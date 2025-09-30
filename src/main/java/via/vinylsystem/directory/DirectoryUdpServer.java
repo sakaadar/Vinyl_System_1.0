@@ -49,15 +49,29 @@ public class DirectoryUdpServer extends Thread {
       switch (cmd) {
         case "REGISTER":
           try {
-            long ttl = registryService.register(arg, "0.0.0.0"); //
+            long ttl = registryService.register(arg, "0.0.0.0");
+            return "OK " + ttl;
+          } catch (StatusExeption e) {
+            return "ERROR " + e.getCode();
+          }
+        case "UPDATE":
+          try {
+            long ttl = registryService.update(arg, "0.0.0.0");
             return "OK " + ttl;
           } catch (StatusExeption e) {
             return "ERROR " + e.getCode();
           }
         case "LOOKUP":
           try {
-            RegistryService.LookupResult res = registryService.lookup(arg);
+            LookUpResult res = registryService.lookup(arg);
             return "OK " + res.getIp() + " " + res.getTtlSeconds();
+          } catch (StatusExeption e) {
+            return "ERROR " + e.getCode();
+          }
+        case "LOOKUP_IP":
+          try {
+            LookUpResult res = registryService.lookupByIp(arg);
+            return "OK " + res.getName() + " " + res.getTtlSeconds();
           } catch (StatusExeption e) {
             return "ERROR " + e.getCode();
           }
