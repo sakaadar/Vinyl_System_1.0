@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class JsonUtils
 {
-  private static final Gson gson = new Gson();
+  public static final Gson gson = new Gson();
 
   public static Map<String, String> tryParseJsonMap(String text){
     try
@@ -62,7 +62,7 @@ public class JsonUtils
     }
   }
 
-  public static void writeJsonLine(BufferedWriter writer,  Map<String, String> payload)
+  public static void writeJsonLine(BufferedWriter writer,  Map<String, ?> payload)
       throws IOException
   {
     String json = gson.toJson(payload);

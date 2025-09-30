@@ -8,6 +8,7 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,7 +26,7 @@ public class CatalogServer
   public CatalogServer(int servicePort, List<via.vinylsystem.Model.Track> catalog)
   {
     this.servicePort = servicePort;
-    this.catalog = catalog;
+    this.catalog = seedCatalog();
     this.running = false;
   }
 
@@ -76,19 +77,61 @@ public class CatalogServer
       {
         Map<String,String> payload = new HashMap<>();
 
-        for(Track t : catalog)
+        for(Track t : catalog){
+          payload.put(
+              t.getId(),
+              t.getArtist() + " - " + t.getTitle() + " (" + t.getYear() + ")"
+          );
+        }
+        writeJsonLine(writer,payload);
       }
+      else if(line.startsWith("GET")){
+        String id = line.substring(4).trim();
+        Track track = findById(catalog,id);
+        if(track == null){
+          writeJsonLine(writer,Map.of("STATUS","NOT_FOUND"));
+        }else{
+          writeJsonLine(writer,Map.of("item",track));
+        }
+      }
+      else if(line.startsWith("SEARCH")) {
+        String q = line.substring(7).trim().toLowerCase(Locale.ROOT);
 
+        List<Track> hits = catalog.stream()
+            .filter(track -> track.getArtist().toLowerCase().contains(q)
+                || track.getTitle().toLowerCase().contains(q))
+            .toList();
+        writeJsonLine(writer, Map.of("items", hits));
+      }
+      else{
+        writeJsonLine(writer, Map.of("STATUS", "BAD_REQ"));
+      }
     }
     catch (SocketException e)
     {
-      throw new RuntimeException(e);
+      e.printStackTrace();
     }
     catch (IOException e)
     {
-      throw new RuntimeException(e);
+      e.printStackTrace();
+    }
+    finally
+    {
+      closeSocketCon(s);
     }
   }
+
+  private Track findById(List<Track> catalog, String id)
+  {
+    for(Track track: catalog)
+    {
+      if(track.getId().equalsIgnoreCase(id)){
+        return track;
+      }
+    }
+    return null;
+  }
+
   private static List<Track> seedCatalog(){
     return List.of(
         new Track("T001","Gilli", "La Varrio", 2017),
