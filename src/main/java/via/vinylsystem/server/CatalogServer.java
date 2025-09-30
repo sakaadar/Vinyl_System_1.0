@@ -39,6 +39,19 @@ public class CatalogServer
     Thread t = new Thread(this::acceptLoop, "catalog-accept");
     t.start();
   }
+  public void stop(){
+    running = false;
+    try {
+      if(server != null && !server.isClosed())
+      {
+        server.close();
+      }
+    }
+    catch (IOException e)
+    {
+      System.out.println("Could not close server: " + e);
+    }
+  }
 
   private void acceptLoop()
   {
