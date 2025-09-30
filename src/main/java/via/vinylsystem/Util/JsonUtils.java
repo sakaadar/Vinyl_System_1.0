@@ -3,6 +3,10 @@ package via.vinylsystem.Util;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 
 public class JsonUtils
@@ -37,6 +41,47 @@ public class JsonUtils
   public static String format6(long n)
   {
     return String.format("%06d",n);
+  }
+  public static String readLineWithLimit(BufferedReader reader,long maxLen){
+    try
+    {
+      String line = reader.readLine();
+      if(line == null)
+      {
+        return null;
+      }
+      if(line.length() > maxLen)
+      {
+        return null;
+      }
+      return line.trim();
+    }
+    catch (IOException e)
+    {
+      throw new RuntimeException("Could not read line: "+e);
+    }
+  }
+
+  public static void writeJsonLine(BufferedWriter writer,  Map<String, String> payload)
+      throws IOException
+  {
+    String json = gson.toJson(payload);
+    writer.write(json);
+    writer.newLine();
+    writer.flush();
+  }
+  public static void closeSocketCon(Closeable c)
+  {
+    try{
+      if(c != null)
+      {
+        c.close();
+      }
+    }
+    catch (IOException e)
+    {
+      //ignore
+    }
   }
 
 }
