@@ -4,6 +4,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.time.Duration;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DirectoryLookupClient {
 
@@ -43,6 +45,7 @@ public class DirectoryLookupClient {
     this.timeoutMillis = timeoutMillis;
   }
 
+
   public LookupResponse lookup(String name) throws Exception {
     try (DatagramSocket socket = new DatagramSocket()) {
       socket.setSoTimeout(timeoutMillis);
@@ -55,23 +58,20 @@ public class DirectoryLookupClient {
       socket.receive(resp);
 
       String line = new String(resp.getData(), 0, resp.getLength()).trim();
-      String[] parts = line.split("\\s+");
-      if (parts.length >= 1 && "OK".equalsIgnoreCase(parts[0])) {
-        if (parts.length >= 3) {
-          String ip = parts[1];
-          long ttl = parseLongSafe(parts[2], 0);
-            return new LookupResponse(true, ip, ttl, null);
-        }
-        return new LookupResponse(true, parts.length >= 2 ? parts[1] : null, 0, null);
-      } else if (parts.length >= 2 && "ERROR".equalsIgnoreCase(parts[0])) {
-        return new LookupResponse(false, null, 0, parts[1]);
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode node = mapper.readTree(line);
+
+      if (node.has("status") && "OK".equalsIgnoreCase(node.get("status").asText())) {
+        String ip = node.has("ip") ? node.get("ip").asText() : null;
+        long ttl = node.has("ttl") ? node.get("ttl").asLong() : 0;
+        return new LookupResponse(true, ip, ttl, null);
+      } else if (node.has("status") && "ERROR".equalsIgnoreCase(node.get("status").asText())) {
+        String code = node.has("code") ? node.get("code").asText() : "000001";
+        return new LookupResponse(false, null, 0, code);
       }
-      return new LookupResponse(false, null, 0, "000001"); // fallback UNKNOWN_CMD
+      return new LookupResponse(false, null, 0, "000001");
     }
   }
 
-  private long parseLongSafe(String s, long def) {
-    try { return Long.parseLong(s); } catch (NumberFormatException e) { return def; }
-  }
 
 }
