@@ -67,7 +67,8 @@ public class CatalogServer {
         String directoryHost = "localhost";
         int directoryPort = 5000;
         String serverName = "vinyl.group1.pro2x";
-        new CatalogServer().registerInDirectory(directoryHost, directoryPort, serverName);
-        new CatalogServer().start(6000);
+        CatalogServer server = new CatalogServer();
+        server.registerInDirectory(directoryHost, directoryPort, serverName);
+        server.start(6000);
     }
 }

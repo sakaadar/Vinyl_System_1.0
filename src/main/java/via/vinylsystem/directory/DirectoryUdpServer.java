@@ -55,11 +55,15 @@ public class DirectoryUdpServer extends Thread {
       String arg = parts[1];
       try {
         switch (cmd) {
-          case "REGISTER":
-            long ttl = registryService.register(arg, "0.0.0.0");
-            json.put("status", "OK");
-            json.put("ttl", ttl);
-            break;
+         case "REGISTER":
+             String[] regParts = arg.split("\\s+");
+             if (regParts.length < 2) throw new StatusExeption(StatusCodes.UNKNOWN_CMD);
+             String name = regParts[0];
+             String ip = regParts[1];
+             long ttl = registryService.register(name, ip);
+             json.put("status", "OK");
+             json.put("ttl", ttl);
+             break;
           case "UPDATE":
             ttl = registryService.update(arg, "0.0.0.0");
             json.put("status", "OK");
