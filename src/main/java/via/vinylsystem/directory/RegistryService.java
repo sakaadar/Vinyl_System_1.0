@@ -42,7 +42,7 @@ public class RegistryService {
       throw new StatusExeption(StatusCodes.NONE_REGISTERED);
     }
     long ttl = reg.ttlSeconds(now);
-    return new LookUpResult(reg.getIp(), reg.getName(), ttl);
+    return new LookUpResult(reg.getName(), reg.getIp(),ttl);
   }
 
 

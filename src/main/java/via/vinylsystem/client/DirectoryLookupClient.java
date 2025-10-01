@@ -72,6 +72,65 @@ public class DirectoryLookupClient {
       return new LookupResponse(false, null, 0, "000001");
     }
   }
+   /* you can use this to look up a server by ip instead of name, but it's not needed now.
+  public LookupResponse lookupByIp(String ip) throws Exception {
+    try (DatagramSocket socket = new DatagramSocket()) {
+      socket.setSoTimeout(timeoutMillis);
+      byte[] out = ("LOOKUP_IP " + ip).getBytes();
+      DatagramPacket req = new DatagramPacket(out, out.length, directoryAddress, directoryPort);
+      socket.send(req);
+
+      byte[] buf = new byte[512];
+      DatagramPacket resp = new DatagramPacket(buf, buf.length);
+      socket.receive(resp);
+
+      String line = new String(resp.getData(), 0, resp.getLength()).trim();
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode node = mapper.readTree(line);
+
+      if (node.has("status") && "OK".equalsIgnoreCase(node.get("status").asText())) {
+        String name = node.has("name") ? node.get("name").asText() : null;
+        long ttl = node.has("ttl") ? node.get("ttl").asLong() : 0;
+        // For symmetry, return name in the ip field
+        return new LookupResponse(true, name, ttl, null);
+      } else if (node.has("status") && "ERROR".equalsIgnoreCase(node.get("status").asText())) {
+        String code = node.has("code") ? node.get("code").asText() : "000001";
+        return new LookupResponse(false, null, 0, code);
+      }
+      return new LookupResponse(false, null, 0, "000001");
+    }
+  }
+  */
+
+  public static LookupResponse lookupByNameTcp(String directoryHost, int directoryPort, String serverName) throws Exception {
+      try (java.net.Socket socket = new java.net.Socket(directoryHost, directoryPort);
+           java.io.PrintWriter out = new java.io.PrintWriter(socket.getOutputStream(), true);
+           java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()))) {
+          out.println("LOOKUP " + serverName);
+          String response = in.readLine();
+          com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+          com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(response);
+
+          if (node.has("status") && "OK".equalsIgnoreCase(node.get("status").asText())) {
+              String ip = node.has("ip") ? node.get("ip").asText() : null;
+              long ttl = node.has("ttl") ? node.get("ttl").asLong() : 0;
+              return new LookupResponse(true, ip, ttl, null);
+          } else if (node.has("status") && "ERROR".equalsIgnoreCase(node.get("status").asText())) {
+              String code = node.has("code") ? node.get("code").asText() : "000001";
+              return new LookupResponse(false, null, 0, code);
+          }
+          return new LookupResponse(false, null, 0, "000001");
+      }
+  }
+
+public static void main(String[] args) throws Exception {
+    LookupResponse byName = lookupByNameTcp("localhost", 5000, "vinyl.group1.pro2x");
+    if (byName.isOk()) {
+        System.out.println(byName.getIp());
+    } else {
+        System.out.println("Lookup failed: " + byName.getErrorCode());
+    }
+}
 
 
 }
