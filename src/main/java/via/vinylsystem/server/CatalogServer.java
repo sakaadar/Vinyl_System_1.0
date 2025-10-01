@@ -145,7 +145,7 @@ public class CatalogServer
     return null;
   }
 
-  private static List<Track> seedCatalog(){
+  public static List<Track> seedCatalog(){
     return List.of(
         new Track("T001","Gilli", "La Varrio", 2017),
         new Track("T002", "Kesi", "Mamacita", 2014),

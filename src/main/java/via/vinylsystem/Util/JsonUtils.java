@@ -2,6 +2,7 @@ package via.vinylsystem.Util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import javafx.css.Match;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -82,6 +83,11 @@ public class JsonUtils
     {
       //ignore
     }
+  }
+  public static String ttl6(int ttlSec)
+  {
+    int clamped = Math.max(0,Math.min(ttlSec,999_999));
+    return format6(clamped);
   }
 
 }

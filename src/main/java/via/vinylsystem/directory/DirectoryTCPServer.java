@@ -60,7 +60,16 @@ public class DirectoryTCPServer
       try
       {
         Socket socket = serverSocket.accept();
-        executor.submit(() -> handleClient(socket));
+        executor.submit(() -> {
+          try
+          {
+            handleClient(socket);
+          }
+          catch (IOException e)
+          {
+            throw new RuntimeException(e);
+          }
+        });
       }
       catch (IOException e)
       {
@@ -72,16 +81,19 @@ public class DirectoryTCPServer
     }
   }
 
-  private void handleClient(Socket socket)
+  private void handleClient(Socket socket) throws IOException
   {
+    BufferedReader reader = null;
+    BufferedWriter writer = null;
     try
     {
-      socket.setSoTimeout(5000);
+      socket.setSoTimeout(READ_TIMEOUT_MS);
       //Reader/writer
-      BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
+      reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+      writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
 
       String line = readLineWithLimit(reader, MAX_LINE_LEN);
+      System.out.println("TCP IN  " + line);
       if(line == null)
       {
         sendstatus(writer,StatusCodes.UNKNOWN_CMD);
@@ -91,27 +103,38 @@ public class DirectoryTCPServer
       Map<String, String> req = tryParseJsonMap(line);
       if(req == null){
         sendstatus(writer,StatusCodes.UNKNOWN_CMD);
+        return;
       }
       //Extract fields + IP
       String cmd = req.get("CMD");
       String name = req.get("NAME");
-      String ip = socket.getInetAddress().getHostAddress();
+      String ip;
+      if(req.get("IPv4") != null){
+        ip = req.get("IPv4");
+      } else if(req.get("IP") != null){
+        ip = req.get("IP");
+      } else{
+        ip = socket.getInetAddress().getHostAddress();
+      }
 
       if(cmd == null || name == null){
         sendstatus(writer, StatusCodes.UNKNOWN_CMD);
+        return;
       }
       cmd = cmd.toUpperCase(Locale.ROOT);
 
       //Dispatch to service
       try{
+        long ttl;
         if("REGISTER".equals(cmd)){
-          long ttl = registry.register(name,ip);
-          sendTtl(writer,ttl);
+         ttl = registry.register(name,ip);
+          System.out.println("TCP OUT ");
+          sendOkWithTtl(writer,ttl);
         }
-        else if ("UPDATE".equals(cmd))
+        else if ("RENEW".equals(cmd)||"UPDATE".equals(cmd))
         {
-          long ttl = registry.update(name, ip);
-          sendTtl(writer, ttl);
+          ttl = registry.update(name,ip);
+          sendOkWithTtl(writer,ttl);
         }
         else{
           sendstatus(writer, StatusCodes.UNKNOWN_CMD);
@@ -124,7 +147,8 @@ public class DirectoryTCPServer
     }
     catch (IOException e)
     {
-      throw new RuntimeException(e);
+      System.err.println("DirectoryTCPServer handle error: " + e.getMessage());
+      sendstatus(writer, StatusCodes.SERVER_ERROR);
     }
     finally
     {
@@ -146,6 +170,15 @@ public class DirectoryTCPServer
     map.put("TTL", ttlStr);
 
     writeJsonLine(writer, map);
+  }
+
+  private void sendOkWithTtl(BufferedWriter writer,  long ttlSec)
+      throws IOException
+  {
+    Map<String,String> map = new HashMap<>();
+    map.put("STATUS",StatusCodes.OK);
+    map.put("TTL", format6(ttlSec));
+    writeJsonLine(writer,map);
   }
 
 }

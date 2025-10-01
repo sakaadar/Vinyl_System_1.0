@@ -132,7 +132,7 @@ public class RegistryService
     }
   }
 
-  public boolean validName(String name)
+  public static boolean validName(String name)
   {
     if(name.length() > 30 || name.isEmpty())
     {
