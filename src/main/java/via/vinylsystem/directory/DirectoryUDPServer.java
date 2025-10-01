@@ -117,10 +117,12 @@ public class DirectoryUDPServer
         long nowMs = System.currentTimeMillis();
         long ttlLeftSec = Math.max(0L,(reg.getExpiresAtMillis()- nowMs / 1000L));
 
+        long ttlClamped = Math.min(999_999L,ttlLeftSec);
         Map<String,String> response = new HashMap<>();
+        response.put("STATUS", "000000");
         response.put("NAME", reg.getName());
         response.put("IPv4", reg.getIp());
-        response.put("TTL", format6(ttlLeftSec));
+        response.put("TTL", format6(ttlClamped));
         sendJson(packet.getAddress(), packet.getPort(),response);
       }
       catch (StatusExeption e)

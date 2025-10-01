@@ -80,7 +80,7 @@ public class Servermain
     }
     catch (IOException e)
     {
-      throw new RuntimeException(e);
+     System.out.println("Exeption in Server starting: " + e.getMessage());
     }
   }
 

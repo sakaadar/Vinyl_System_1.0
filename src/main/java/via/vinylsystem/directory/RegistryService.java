@@ -4,6 +4,7 @@ import via.vinylsystem.Model.Registration;
 
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,8 @@ public class RegistryService
   {
     this.defaultTtlSec = defaultTtlSec;
     this.clock = clock;
+    this.byName = new HashMap<>();
+    this.nameByIp = new HashMap<>();
   }
   public synchronized long register(String name, String ip)
       throws StatusExeption

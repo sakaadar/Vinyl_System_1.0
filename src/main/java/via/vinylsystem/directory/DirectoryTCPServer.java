@@ -61,14 +61,7 @@ public class DirectoryTCPServer
       {
         Socket socket = serverSocket.accept();
         executor.submit(() -> {
-          try
-          {
-            handleClient(socket);
-          }
-          catch (IOException e)
-          {
-            throw new RuntimeException(e);
-          }
+          handleClient(socket);
         });
       }
       catch (IOException e)
@@ -81,80 +74,56 @@ public class DirectoryTCPServer
     }
   }
 
-  private void handleClient(Socket socket) throws IOException
-  {
+  private void handleClient(Socket socket) {
     BufferedReader reader = null;
     BufferedWriter writer = null;
-    try
-    {
+    try {
       socket.setSoTimeout(READ_TIMEOUT_MS);
-      //Reader/writer
       reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
       writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
 
       String line = readLineWithLimit(reader, MAX_LINE_LEN);
       System.out.println("TCP IN  " + line);
-      if(line == null)
-      {
-        sendstatus(writer,StatusCodes.UNKNOWN_CMD);
-        return;
-      }
-      //Parse JSON -> Map
-      Map<String, String> req = tryParseJsonMap(line);
-      if(req == null){
-        sendstatus(writer,StatusCodes.UNKNOWN_CMD);
-        return;
-      }
-      //Extract fields + IP
-      String cmd = req.get("CMD");
-      String name = req.get("NAME");
-      String ip;
-      if(req.get("IPv4") != null){
-        ip = req.get("IPv4");
-      } else if(req.get("IP") != null){
-        ip = req.get("IP");
-      } else{
-        ip = socket.getInetAddress().getHostAddress();
-      }
+      if (line == null) { sendstatus(writer, StatusCodes.UNKNOWN_CMD); return; }
 
-      if(cmd == null || name == null){
-        sendstatus(writer, StatusCodes.UNKNOWN_CMD);
-        return;
-      }
+      Map<String,String> req = tryParseJsonMap(line);
+      if (req == null)   { sendstatus(writer, StatusCodes.UNKNOWN_CMD); return; }
+
+      String cmd  = req.get("CMD");
+      String name = req.get("NAME");
+      String ip   = (req.get("IPv4") != null) ? req.get("IPv4")
+          : (req.get("IP")   != null) ? req.get("IP")
+          : socket.getInetAddress().getHostAddress();
+
+      if (cmd == null || name == null) { sendstatus(writer, StatusCodes.UNKNOWN_CMD); return; }
       cmd = cmd.toUpperCase(Locale.ROOT);
 
-      //Dispatch to service
-      try{
-        long ttl;
-        if("REGISTER".equals(cmd)){
-         ttl = registry.register(name,ip);
-          System.out.println("TCP OUT ");
-          sendOkWithTtl(writer,ttl);
-        }
-        else if ("RENEW".equals(cmd)||"UPDATE".equals(cmd))
-        {
-          ttl = registry.update(name,ip);
-          sendOkWithTtl(writer,ttl);
-        }
-        else{
-          sendstatus(writer, StatusCodes.UNKNOWN_CMD);
-        }
+      long ttl;
+      if ("REGISTER".equals(cmd)) {
+        ttl = registry.register(name, ip);
+        sendOkWithTtl(writer, ttl);
+      } else if ("RENEW".equals(cmd) || "UPDATE".equals(cmd)) {
+        ttl = registry.update(name, ip);
+        sendOkWithTtl(writer, ttl);
+      } else {
+        sendstatus(writer, StatusCodes.UNKNOWN_CMD);
       }
-      catch (StatusExeption se)
-      {
-        sendstatus(writer, se.getCode());
-      }
-    }
-    catch (IOException e)
-    {
-      System.err.println("DirectoryTCPServer handle error: " + e.getMessage());
-      sendstatus(writer, StatusCodes.SERVER_ERROR);
-    }
-    finally
-    {
+
+    } catch (StatusExeption se) {
+      safeSendStatus(writer, se.getCode());
+    } catch (Exception e) {                         // ← fang ALT
+      System.err.println("DirectoryTCPServer error: " + e);
+      safeSendStatus(writer, StatusCodes.SERVER_ERROR); // "000500"
+    } finally {
       closeSocketCon(socket);
     }
   }
+
+  private void safeSendStatus(BufferedWriter w, String code) {
+    if (w == null) return;
+    try { sendstatus(w, code); } catch (IOException ignore) {}
+  }
+
 
   private void sendstatus(BufferedWriter writer, String code) throws IOException
   {
