@@ -31,6 +31,7 @@ public class VinylServerClient implements Closeable
     if(line==null) throw new EOFException("Server closed");
     return JsonParser.parseString(line).getAsJsonObject();
   }
+
   public JsonObject list() throws IOException
   {
     JsonObject q = new JsonObject();
@@ -44,12 +45,12 @@ public class VinylServerClient implements Closeable
     q.addProperty("Q", qstr);
     return send(q);
   }
-  public JsonObject get(String id) throws IOException
+  public String get(String id) throws IOException
   {
       JsonObject q = new JsonObject();
       q.addProperty("CMD","GET");
       q.addProperty("ID", id);
-      return send(q);
+      return send(q).toString();
   }
 
   @Override public void close() throws IOException

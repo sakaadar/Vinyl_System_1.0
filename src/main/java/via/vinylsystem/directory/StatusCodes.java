@@ -8,5 +8,8 @@ public class StatusCodes
   public static final String UPDATE_UNKNOWN = "000003";
   public static final String NONE_REGISTERED = "000100";
   public static final String SERVER_ERROR = "000500";
+  public static final String BAD_REQUEST = "000200";
+  public static final String NOT_FOUND = "0001000";
+
 
 }

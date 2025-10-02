@@ -1,19 +1,17 @@
 package via.vinylsystem.server;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import via.vinylsystem.Model.Track;
-
+import via.vinylsystem.directory.StatusCodes;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static via.vinylsystem.Util.JsonUtils.*;
 
 public class CatalogServer
 {
@@ -23,10 +21,12 @@ public class CatalogServer
   private volatile boolean running;
   private List<via.vinylsystem.Model.Track> catalog;
 
+  private static final Gson GSON = new Gson();
+
   public CatalogServer(int servicePort, List<via.vinylsystem.Model.Track> catalog)
   {
     this.servicePort = servicePort;
-    this.catalog = seedCatalog();
+    this.catalog = (catalog != null) ? catalog : seedCatalog();
     this.running = false;
   }
 
@@ -64,75 +64,82 @@ public class CatalogServer
       }
       catch (IOException e)
       {
-        throw new RuntimeException("Could not accept connections: "+e);
+        if(running)
+        {
+          throw new RuntimeException("Could not accept connections: " + e);
+        }
       }
     }
   }
 
-  private void handleClient(Socket s)
-  {
-    //læs en linje (LIST / GET / SEARCH)
-    //byg svar som JSON-linje
-    //skriv + flush, luk socket
-    try
-    {
-      s.setSoTimeout(5000);
-      BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
+  private void handleClient(Socket s) {
+    BufferedReader in = null;
+    BufferedWriter out = null;
+    try {
+      s.setSoTimeout(0);
+      in  = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
+      out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8));
 
-      String line = readLineWithLimit(reader, 2048);
-      if(line == null)
-      {
-        writeJsonLine(writer, Map.of("STATUS","BAD_REQ"));
-        closeSocketCon(s);
-      }
-      else if(line.equals("LIST"))
-      {
-        Map<String,String> payload = new HashMap<>();
 
-        for(Track t : catalog){
-          payload.put(
-              t.getId(),
-              t.getArtist() + " - " + t.getTitle() + " (" + t.getYear() + ")"
-          );
+      while (true) {
+        String line = in.readLine();
+        if (line == null) break;
+        System.out.println("CAT IN " + line);
+
+        JsonObject req = JsonParser.parseString(line).getAsJsonObject();
+        String cmd = req.has("CMD") ? req.get("CMD").getAsString() : "";
+
+        if ("QUIT".equalsIgnoreCase(cmd)) {
+          JsonObject bye = new JsonObject();
+          bye.addProperty("STATUS", StatusCodes.OK);
+          out.write(bye.toString()); out.write('\n'); out.flush();
+          break;
         }
-        writeJsonLine(writer,payload);
-      }
-      else if(line.startsWith("GET")){
-        String id = line.substring(4).trim();
-        Track track = findById(catalog,id);
-        if(track == null){
-          writeJsonLine(writer,Map.of("STATUS","NOT_FOUND"));
-        }else{
-          writeJsonLine(writer,Map.of("item",track));
-        }
-      }
-      else if(line.startsWith("SEARCH")) {
-        String q = line.substring(7).trim().toLowerCase(Locale.ROOT);
 
-        List<Track> hits = catalog.stream()
-            .filter(track -> track.getArtist().toLowerCase().contains(q)
-                || track.getTitle().toLowerCase().contains(q))
-            .toList();
-        writeJsonLine(writer, Map.of("items", hits));
+        JsonObject resp = new JsonObject();
+        resp.addProperty("STATUS", StatusCodes.OK);
+
+        switch (cmd) {
+          case "LIST" -> resp.add("TRACKS", GSON.toJsonTree(catalog));
+          case "SEARCH" -> {
+            String q = req.has("Q") ? req.get("Q").getAsString() : "";
+            List<Track> hits = catalog.stream()
+                .filter(t -> t.getArtist().toLowerCase().contains(q.toLowerCase())
+                    || t.getTitle().toLowerCase().contains(q.toLowerCase()))
+                .toList();
+            resp.add("TRACKS", GSON.toJsonTree(hits).getAsJsonArray());
+          }
+          case "GET" -> {
+            String id = req.has("ID") ? req.get("ID").getAsString() : "";
+            if (id.isBlank()) resp.addProperty("STATUS", StatusCodes.BAD_REQUEST);
+            else {
+              Track t = findById(catalog, id);
+              if (t == null) resp.addProperty("STATUS", StatusCodes.NOT_FOUND);
+              else resp.add("TRACK", GSON.toJsonTree(t));
+            }
+          }
+          default -> resp.addProperty("STATUS", StatusCodes.UNKNOWN_CMD);
+        }
+
+        System.out.println("CAT OUT " + resp);
+        out.write(resp.toString()); out.write('\n'); out.flush();
       }
-      else{
-        writeJsonLine(writer, Map.of("STATUS", "BAD_REQ"));
+    } catch (Exception e) {
+      System.err.println("CatalogServer error: " + e);
+      if (out != null) {
+        try {
+          JsonObject err = new JsonObject();
+          err.addProperty("STATUS", StatusCodes.SERVER_ERROR); // "000500"
+          out.write(err.toString()); out.write('\n'); out.flush();
+        } catch (IOException ignore) {}
       }
-    }
-    catch (SocketException e)
-    {
-      e.printStackTrace();
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
-    finally
-    {
-      closeSocketCon(s);
+    } finally {
+      try { if (out != null) out.close(); } catch (IOException ignore) {}
+      try { if (in  != null) in.close();  } catch (IOException ignore) {}
+      try { s.close(); } catch (IOException ignore) {}
     }
   }
+
 
   private Track findById(List<Track> catalog, String id)
   {

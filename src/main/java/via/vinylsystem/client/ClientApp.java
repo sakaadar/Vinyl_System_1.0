@@ -69,7 +69,7 @@ public class ClientApp {
           case "GET" -> {
             ensureConnected(conn);
             String id = arg;
-            if (!id.isBlank()) {
+            if (id.isBlank()) {
               System.out.print("ID: ");
               id = sc.nextLine().trim();
             }
