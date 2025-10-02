@@ -10,19 +10,6 @@ Protokol: **line-delimited JSON** (én JSON pr. linje). Fokus: enkel, robust, de
 
 ## Indholdsfortegnelse
 - [Arkitektur](#arkitektur)
-- [Statuskoder](#statuskoder)
-- [Krav](#krav)
-- [Build](#build)
-- [Kørsel](#kørsel)
-  - [Directory](#1-directory)
-  - [Server (Catalog)](#2-server-catalog)
-  - [Client (CLI)](#3-client-cli)
-- [Eksempel-output](#eksempel-output)
-- [Protokol](#protokol)
-- [Projektstruktur](#projektstruktur)
-- [Fejlfinding](#fejlfinding)
-- [Videre arbejde](#videre-arbejde)
-- [Licens](#licens)
 
 ---
 
