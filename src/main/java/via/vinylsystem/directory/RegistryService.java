@@ -1,11 +1,12 @@
 package via.vinylsystem.directory;
 
+import via.vinylsystem.Model.Registration;
+
 import java.time.Clock;
 import java.util.ArrayList;
-import java.util.IllegalFormatCodePointException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class RegistryService
 {
@@ -17,6 +18,8 @@ public class RegistryService
   {
     this.defaultTtlSec = defaultTtlSec;
     this.clock = clock;
+    this.byName = new HashMap<>();
+    this.nameByIp = new HashMap<>();
   }
   public synchronized long register(String name, String ip)
       throws StatusExeption
@@ -132,7 +135,7 @@ public class RegistryService
     }
   }
 
-  public boolean validName(String name)
+  public static boolean validName(String name)
   {
     if(name.length() > 30 || name.isEmpty())
     {
