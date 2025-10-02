@@ -24,7 +24,7 @@ public class Vinyl {
         return publicationYear;
     }
 
-    // A method to convert the object to a JSON-like string
+
     public String toJson() {
         return String.format("{\"artist\":\"%s\", \"title\":\"%s\", \"publicationYear\":%d}",
                 artist, title, publicationYear);

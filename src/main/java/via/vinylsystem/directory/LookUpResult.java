@@ -1,4 +1,3 @@
-// src/main/java/via/vinylsystem/directory/LookupResult.java
 package via.vinylsystem.directory;
 
 public class LookUpResult {

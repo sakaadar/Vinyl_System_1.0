@@ -1,4 +1,3 @@
-// src/main/java/via/vinylsystem/server/CatalogServer.java
 package via.vinylsystem.server;
 
 import java.io.*;

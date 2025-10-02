@@ -60,7 +60,7 @@ public class EchoServer extends Thread
       }
       catch (IOException e)
       {
-        // Consider logging the error instead of throwing a RuntimeException in a thread
+        // you can log the error instead of throwing a RuntimeException in a thread
         e.printStackTrace();
         running = false;
       }

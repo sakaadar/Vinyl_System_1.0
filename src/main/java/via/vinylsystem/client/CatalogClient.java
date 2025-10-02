@@ -34,7 +34,7 @@ public class CatalogClient {
         System.out.print("Enter server IP: ");
         String serverIp = reader.readLine().trim();
 
-        // Test connection
+
         try (Socket testSocket = new Socket(serverIp, SERVER_PORT)) {
             System.out.println("Connection successful to " + serverIp + ":" + SERVER_PORT);
         } catch (Exception e) {
