@@ -21,30 +21,17 @@ public class Registration
     return name;
   }
 
-  public void setName(String name)
-  {
-    this.name = name;
-  }
-
   public String getIp()
   {
     return ip;
   }
 
-  public void setIp(String ip)
-  {
-    this.ip = ip;
-  }
 
   public long getExpiresAtMillis()
   {
     return expiresAtMillis;
   }
 
-  public void setExpiresAtMillis(long expiresAtMillis)
-  {
-    this.expiresAtMillis = expiresAtMillis;
-  }
 
   public long ttlSeconds(long nowMillis)
   {

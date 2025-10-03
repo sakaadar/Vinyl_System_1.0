@@ -25,7 +25,7 @@ public class RegistryService
       throws StatusExeption
   {
     inputvalidation(name, ip);
-    //Opret/forny registrering
+    //Opret registrering
 
     long now = clock.millis();
 
