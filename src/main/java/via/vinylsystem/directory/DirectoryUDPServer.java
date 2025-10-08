@@ -186,7 +186,7 @@ public class DirectoryUDPServer
                 }
                 //Hvis fundet beregn ttl og send svar
                 long nowMs = System.currentTimeMillis();
-                long ttlLeftSec = Math.max(0L,(reg.getExpiresAtMillis()- nowMs / 1000L));
+                long ttlLeftSec = Math.max(0L,(reg.getExpiresAtMillis()- nowMs + 999) / 1000L);
 
                 long ttlClamped = Math.min(999_999L,ttlLeftSec);
                 Map<String,String> response = new HashMap<>();
