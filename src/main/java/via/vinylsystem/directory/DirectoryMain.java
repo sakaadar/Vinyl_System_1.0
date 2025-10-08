@@ -2,37 +2,74 @@ package via.vinylsystem.directory;
 
 import java.time.Clock;
 
+/**
+ * Main entry point for the Directory Service application.
+ * <p>
+ * This class initializes and starts both TCP and UDP servers for the directory service,
+ * which handles service registration, updates, and lookups. The TCP server processes
+ * registration and renewal requests, while the UDP server handles lookup queries.
+ * </p>
+ * <p>
+ * Default configuration:
+ * <ul>
+ *   <li>TCP Port: 5044 (for registration and updates)</li>
+ *   <li>UDP Port: 4555 (for lookups)</li>
+ *   <li>Default TTL: 3600 seconds (1 hour)</li>
+ * </ul>
+ * </p>
+ * <p>
+ * The application registers a shutdown hook to ensure graceful termination of both
+ * servers when the JVM exits.
+ * </p>
+ *
+ * @author Ghiyath & sakariae
+ * @version 1.0
+ */
 public class DirectoryMain
 {
-  public static void main(String[] args)
-  {
-    int tcpPort = 5044;
-    int udpPort = 4555;
-
-    long defaultTtlSec = 3600;
-
-    RegistryService registry = new RegistryService(defaultTtlSec, Clock.systemUTC());
-
-    DirectoryTCPServer tcpServer = new DirectoryTCPServer(tcpPort,registry);
-    DirectoryUDPServer udpServer = new DirectoryUDPServer(udpPort, registry);
-
-    try{
-      tcpServer.start();
-      udpServer.start();
-      System.err.printf("Directory running. TCP:%d, UDP:%d, TTL:%ds%n",tcpPort,udpPort,defaultTtlSec);
-    } catch (Exception e)
+    /**
+     * Starts the Directory Service with TCP and UDP servers.
+     * <p>
+     * Initializes the registry service with a default TTL of 3600 seconds and starts
+     * both TCP and UDP servers on their respective ports. Registers a shutdown hook
+     * to ensure proper cleanup when the application terminates.
+     * </p>
+     * <p>
+     * The TCP server listens on port 5044 for registration and update commands,
+     * while the UDP server listens on port 4555 for lookup queries.
+     * </p>
+     *
+     * @param args command line arguments (currently unused)
+     */
+    public static void main(String[] args)
     {
-      System.err.println("Failed to start Directory: " + e.getMessage());
-      e.printStackTrace();
-      System.exit(1);
+        int tcpPort = 5044;
+        int udpPort = 4555;
+
+        long defaultTtlSec = 3600;
+
+        RegistryService registry = new RegistryService(defaultTtlSec, Clock.systemUTC());
+
+        DirectoryTCPServer tcpServer = new DirectoryTCPServer(tcpPort,registry);
+        DirectoryUDPServer udpServer = new DirectoryUDPServer(udpPort, registry);
+
+        try{
+            tcpServer.start();
+            udpServer.start();
+            System.err.printf("Directory running. TCP:%d, UDP:%d, TTL:%ds%n",tcpPort,udpPort,defaultTtlSec);
+        } catch (Exception e)
+        {
+            System.err.println("Failed to start Directory: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down Directory...");
+            try{tcpServer.stop();} catch(Exception ignored) {};
+            try{udpServer.stop();} catch(Exception ignored) {};
+            System.out.println("Directory stopped.");
+        }));
+
     }
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.out.println("Shutting down Directory...");
-      try{tcpServer.stop();} catch(Exception ignored) {};
-      try{udpServer.stop();} catch(Exception ignored) {};
-      System.out.println("Directory stopped.");
-    }));
-
-  }
 }
