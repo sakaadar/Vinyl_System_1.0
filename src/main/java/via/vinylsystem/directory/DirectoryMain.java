@@ -1,5 +1,10 @@
 package via.vinylsystem.directory;
 
+import via.vinylsystem.Util.AuditLog;
+import via.vinylsystem.Util.FileAuditLog;
+
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Clock;
 
 /**
@@ -41,17 +46,20 @@ public class DirectoryMain
      *
      * @param args command line arguments (currently unused)
      */
-    public static void main(String[] args)
+    public static void main(String[] args) throws IOException
     {
         int tcpPort = 5044;
         int udpPort = 4555;
 
         long defaultTtlSec = 3600;
 
-        RegistryService registry = new RegistryService(defaultTtlSec, Clock.systemUTC());
+        Path auditPath = Path.of("./directory-audit.jsonl");
+        AuditLog audit = new FileAuditLog(auditPath);
+
+        RegistryService registry = new RegistryService(defaultTtlSec, java.time.Clock.systemUTC(),audit);
 
         DirectoryTCPServer tcpServer = new DirectoryTCPServer(tcpPort,registry);
-        DirectoryUDPServer udpServer = new DirectoryUDPServer(udpPort, registry);
+        DirectoryUDPServer udpServer = new DirectoryUDPServer(udpPort, registry, audit);
 
         try{
             tcpServer.start();

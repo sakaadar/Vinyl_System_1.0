@@ -6,4 +6,4 @@ server:
   server_name: "Happy_music.group3.pro2"
   ip: "127.0.0.1"
   ttl: 3600
-  port: 7070
+  port: 6000

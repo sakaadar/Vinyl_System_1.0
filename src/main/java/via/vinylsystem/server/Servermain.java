@@ -73,7 +73,7 @@ public class Servermain
         Map<String, Object> serverConfig = (Map<String, Object>) config.get("server");
 
         String serverName = getArg(args, 0, (String) serverConfig.get("server_name"));
-        int servicePort = 7070; // If you want to add to YAML, use: (int) serverConfig.get("port")
+        int servicePort = 6000; // If you want to add to YAML, use: (int) serverConfig.get("port")
         String directoryHost = (String) serverConfig.get("dir_ip");
         int directoryTcp = (int) serverConfig.get("dir_tcp_port");
         int ttlSec = (int) serverConfig.get("ttl");

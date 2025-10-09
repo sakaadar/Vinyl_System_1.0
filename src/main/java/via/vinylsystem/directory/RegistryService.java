@@ -1,6 +1,9 @@
 package via.vinylsystem.directory;
 
 import via.vinylsystem.Model.Registration;
+import via.vinylsystem.Model.RegistryEvent;
+import via.vinylsystem.Model.RegistryEventType;
+import via.vinylsystem.Util.AuditLog;
 
 import java.time.Clock;
 import java.util.ArrayList;
@@ -33,6 +36,7 @@ public class RegistryService
     private Clock clock;
     private Map<String, Registration> byName;
     private Map<String,String> nameByIp;
+    private final AuditLog audit;
 
     /**
      * Constructs a new RegistryService.
@@ -40,12 +44,13 @@ public class RegistryService
      * @param defaultTtlSec the default time-to-live in seconds for new registrations
      * @param clock the clock instance used for time-based operations and expiration checks
      */
-    RegistryService(long defaultTtlSec, Clock clock)
+    RegistryService(long defaultTtlSec, Clock clock, AuditLog audit)
     {
         this.defaultTtlSec = defaultTtlSec;
         this.clock = clock;
         this.byName = new HashMap<>();
         this.nameByIp = new HashMap<>();
+        this.audit = audit;
     }
 
     /**
@@ -75,6 +80,8 @@ public class RegistryService
 
         byName.put(name,reg);
         nameByIp.put(ip,name);
+
+        audit.append(new RegistryEvent(now, RegistryEventType.REGISTER,name,ip,defaultTtlSec,"TCP","OK")); //LOG
 
         //Retunere TTL i sekunder
         return defaultTtlSec;
@@ -118,6 +125,8 @@ public class RegistryService
         //Gem i begge maps
         byName.put(name,renewed);
         nameByIp.put(ip,name);
+
+        audit.append(new RegistryEvent(now,RegistryEventType.RENEW,name,ip,defaultTtlSec,"TCP", "OK"));
 
         //Retunere TTL
         return defaultTtlSec;

@@ -3,6 +3,9 @@ package via.vinylsystem.directory;
 import java.io.Closeable;
 
 import via.vinylsystem.Model.Registration;
+import via.vinylsystem.Model.RegistryEvent;
+import via.vinylsystem.Model.RegistryEventType;
+import via.vinylsystem.Util.AuditLog;
 import via.vinylsystem.Util.JsonUtils;
 
 import java.io.IOException;
@@ -41,6 +44,7 @@ public class DirectoryUDPServer
     private RegistryService registry;
     private DatagramSocket socket;
     private volatile boolean running;
+    private final AuditLog audit;
 
     /** Maximum UDP packet size in bytes */
     private static final int MAX_UDP = 2048;
@@ -51,10 +55,11 @@ public class DirectoryUDPServer
      * @param port the port number on which the server will listen for UDP packets
      * @param registry the registry service to query for registration information
      */
-    public DirectoryUDPServer(int port, RegistryService registry)
+    public DirectoryUDPServer(int port, RegistryService registry, AuditLog audit)
     {
         this.port = port;
         this.registry = registry;
+        this.audit = audit;
     }
 
     /**
@@ -143,7 +148,7 @@ public class DirectoryUDPServer
      * @throws RuntimeException if an unexpected error occurs during processing
      */
     private void handlePacket(DatagramPacket packet)
-    {
+    {   long nowMs = System.currentTimeMillis();
         try{
             //læs antal bytes -> omdan til string -> også trim
             String text = new String(
@@ -156,7 +161,9 @@ public class DirectoryUDPServer
             Map<String, String> req = tryParseJsonMap(text);
             if(req == null)
             {
-                sendJson(packet.getAddress(),packet.getPort(),Map.of("STATUS: ",StatusCodes.UNKNOWN_CMD));
+                sendJson(packet.getAddress(),packet.getPort(),Map.of("STATUS: ",StatusCodes.BAD_REQUEST));
+                if(audit != null) audit.append(new RegistryEvent(nowMs, RegistryEventType.INVALIDATE,null,null,null, "UDP", "bad json"));
+                return;
             }
             //Tjek name og ip
             boolean hasName = req.containsKey("NAME");
@@ -165,45 +172,59 @@ public class DirectoryUDPServer
             if(!hasName && !hasIp)
             {
                 sendJson(packet.getAddress(), packet.getPort(), Map.of("STATUS: ",StatusCodes.UNKNOWN_CMD));
+                if(audit != null) audit.append(new RegistryEvent(nowMs, RegistryEventType.INVALIDATE,null,null,null,"UDP", "missing NAME or IP"));
+                return;
             }
-            //slå op i registry
-            try{
-                Registration reg;
-                if(hasName){
-                    String name = req.get("NAME");
-                    if(name==null || name.isEmpty()){
-                        sendJson(packet.getAddress(), packet.getPort(), Map.of("STATUS: ", StatusCodes.UNKNOWN_CMD));
-                    }
-                    reg = registry.findByName(name);
-                }
-                else{
-                    String ipReq = req.get(("IP"));
-                    if(ipReq==null || ipReq.isEmpty())
-                    {
-                        sendJson(packet.getAddress(), packet.getPort(), Map.of("STATUS: ", StatusCodes.UNKNOWN_CMD));
-                    }
-                    reg = registry.findByIp(ipReq);
-                }
-                //Hvis fundet beregn ttl og send svar
-                long nowMs = System.currentTimeMillis();
-                long ttlLeftSec = Math.max(0L,(reg.getExpiresAtMillis()- nowMs + 999) / 1000L);
+            String requestedName = hasName ? req.get("NAME") : null;
+            String requestedIp   = hasIp   ? req.get("IP")   : null;
+            if (hasName && (requestedName == null || requestedName.isEmpty())) {
+                sendJson(packet.getAddress(), packet.getPort(), Map.of("STATUS", StatusCodes.BAD_REQUEST));
+                if (audit != null) audit.append(new RegistryEvent(nowMs, RegistryEventType.INVALIDATE, null, null, null, "UDP", "empty NAME"));
+                return;
+            }
+            if (hasIp && (requestedIp == null || requestedIp.isEmpty())) {
+                sendJson(packet.getAddress(), packet.getPort(), Map.of("STATUS", StatusCodes.BAD_REQUEST));
+                if (audit != null) audit.append(new RegistryEvent(nowMs, RegistryEventType.INVALIDATE, null, null, null, "UDP", "empty IP"));
+                return;
+            }
+          Registration reg = hasName ? registry.findByName(requestedName) : registry.findByIp(requestedIp);
 
-                long ttlClamped = Math.min(999_999L,ttlLeftSec);
-                Map<String,String> response = new HashMap<>();
-                response.put("STATUS", "000000");
-                response.put("NAME", reg.getName());
-                response.put("IPv4", reg.getIp());
-                response.put("TTL", format6(ttlClamped));
-                sendJson(packet.getAddress(), packet.getPort(),response);
-            }
-            catch (StatusExeption e)
-            {
-                sendJson(packet.getAddress(), packet.getPort(),Map.of("STATUS: ", e.getCode()));
-            }
+          if(reg != null){
+              long ttlLeftSec = Math.max(0L, (reg.getExpiresAtMillis() - nowMs + 999) / 1000L); //runder op
+              long ttlClamped = Math.min(999_999L, ttlLeftSec);
+
+              //LOG: FOUND
+              if(audit != null){
+                  audit.append(new RegistryEvent(nowMs, RegistryEventType.LOOKUP,
+                                                  reg.getName(),reg.getIp(),ttlClamped, "UDP", "FOUND"));
+              }
+
+              //Response
+              Map<String,String> resp = new HashMap<>();
+              resp.put("STATUS","000000");
+              resp.put("NAME", reg.getName());
+              resp.put("IPv4",reg.getIp());
+              resp.put("TTL",format6(ttlClamped));
+              sendJson(packet.getAddress(),packet.getPort(),resp);
+              return;
+          }
+
+          //NOT FOUND
+          if(audit!=null){
+              String n = hasName ? requestedName : null;
+              String ip = hasIp ? requestedIp : null;
+              audit.append(new RegistryEvent(nowMs, RegistryEventType.LOOKUP,n,ip,0L,"UDP","NOT_FOUND"));
+          }
+          sendJson(packet.getAddress(),packet.getPort(),Map.of("STATUS",StatusCodes.NOT_FOUND));
+          return;
         }
         catch (Exception e)
         {
-            throw new RuntimeException(e);
+            if (audit != null) {
+                audit.append(new RegistryEvent(nowMs, RegistryEventType.ERROR, null, null, null, "UDP",
+                    "exception: " + e.getClass().getSimpleName() + " " + e.getMessage()));
+            }
+            sendJson(packet.getAddress(), packet.getPort(), Map.of("STATUS", StatusCodes.SERVER_ERROR));
         }
     }
 

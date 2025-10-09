@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import via.vinylsystem.Model.Track;
 import via.vinylsystem.directory.StatusCodes;
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -77,9 +78,18 @@ public class CatalogServer
      */
     public void start() throws IOException
     {
-        server = new ServerSocket(servicePort);
-        clientPool = Executors.newCachedThreadPool();
-        running = true;
+        try
+        {
+            ServerSocket ss = new ServerSocket();
+            ss.setReuseAddress(true);
+            ss.bind(new InetSocketAddress(servicePort));
+            this.server = ss;
+        }catch (java.net.BindException be){
+            System.err.println("Bind failed on TCP port " + servicePort + " : " + be.getMessage());
+            throw be;
+        }
+        this.clientPool = Executors.newCachedThreadPool();
+        this.running = true;
 
         Thread t = new Thread(this::acceptLoop, "catalog-accept");
         t.start();

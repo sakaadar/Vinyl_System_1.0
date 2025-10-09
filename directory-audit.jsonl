@@ -1,0 +1,16 @@
+{"tsMillis":1760037537343,"ts":"2025-10-09T19:18:57.343Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
+{"tsMillis":1760037567931,"ts":"2025-10-09T19:19:27.931Z","type":"LOOKUP","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3570,"origin":"UDP","details":"FOUND"}
+{"tsMillis":1760037645044,"ts":"2025-10-09T19:20:45.044Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
+{"tsMillis":1760037736301,"ts":"2025-10-09T19:22:16.301Z","type":"LOOKUP","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3509,"origin":"UDP","details":"FOUND"}
+{"tsMillis":1760040853425,"ts":"2025-10-09T20:14:13.425Z","type":"ERROR","origin":"UDP","details":"exception: StatusExeption null"}
+{"tsMillis":1760043109063,"ts":"2025-10-09T20:51:49.063Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
+{"tsMillis":1760043144655,"ts":"2025-10-09T20:52:24.655Z","type":"LOOKUP","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3565,"origin":"UDP","details":"FOUND"}
+{"tsMillis":1760043233294,"ts":"2025-10-09T20:53:53.294Z","type":"LOOKUP","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3476,"origin":"UDP","details":"FOUND"}
+{"tsMillis":1760043410476,"ts":"2025-10-09T20:56:50.476Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
+{"tsMillis":1760043428044,"ts":"2025-10-09T20:57:08.044Z","type":"LOOKUP","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3583,"origin":"UDP","details":"FOUND"}
+{"tsMillis":1760043482422,"ts":"2025-10-09T20:58:02.422Z","type":"ERROR","origin":"UDP","details":"exception: StatusExeption null"}
+{"tsMillis":1760043727781,"ts":"2025-10-09T21:02:07.781Z","type":"ERROR","origin":"UDP","details":"exception: StatusExeption null"}
+{"tsMillis":1760043855946,"ts":"2025-10-09T21:04:15.946Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
+{"tsMillis":1760043880539,"ts":"2025-10-09T21:04:40.539Z","type":"ERROR","origin":"UDP","details":"exception: StatusExeption null"}
+{"tsMillis":1760044150081,"ts":"2025-10-09T21:09:10.081Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
+{"tsMillis":1760044178549,"ts":"2025-10-09T21:09:38.549Z","type":"INVALIDATE","origin":"UDP","details":"empty NAME"}

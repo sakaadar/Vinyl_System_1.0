@@ -62,7 +62,7 @@ public class ClientApp {
 
         String directoryHost = System.getenv().getOrDefault("VINYL_DIR_HOST", "127.0.0.1");
         int    directoryUdp  = Integer.parseInt(System.getenv().getOrDefault("VINYL_DIR_UDP", "4555"));
-        int    vinylTcpPort  = Integer.parseInt(System.getenv().getOrDefault("VINYL_PORT", "7070"));
+        int    vinylTcpPort  = Integer.parseInt(System.getenv().getOrDefault("VINYL_PORT", "6000"));
 
         DirectoryClient dir = new DirectoryClient(directoryHost, directoryUdp);
         VinylServerClient conn = null;
