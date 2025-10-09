@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import via.vinylsystem.Model.Track;
 import via.vinylsystem.Util.JsonUtils;
+import via.vinylsystem.Util.yamlLoader;
 import via.vinylsystem.directory.RegistryService;
 
 import java.io.*;
@@ -11,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,11 +64,20 @@ public class Servermain
      */
     public static void main(String[] args) throws IOException
     {
-        String serverName = getArg(args,0,System.getenv().getOrDefault("VINNYL_NAME", "Happy_music.group3.pro2"));
-        int servicePort = Integer.parseInt(System.getenv().getOrDefault("VINYL_PORT", "7070"));
-        String directoryHost = System.getenv().getOrDefault("VINYL_DIR_HOST","127.0.0.1");
-        int directoryTcp = Integer.parseInt(System.getenv().getOrDefault("VINYL_DIR_TCP","5044"));
-        int ttlSec = Integer.parseInt(System.getenv().getOrDefault("VINYL_TTL", "900"));
+        Map<String, Object> config;
+        try {
+            config = yamlLoader.loadConfig("server_reg_contract.yaml");
+        } catch (Exception e) {
+            throw new IOException("Failed to load YAML config: " + e.getMessage(), e);
+        }
+        Map<String, Object> serverConfig = (Map<String, Object>) config.get("server");
+
+        String serverName = getArg(args, 0, (String) serverConfig.get("server_name"));
+        int servicePort = 7070; // If you want to add to YAML, use: (int) serverConfig.get("port")
+        String directoryHost = (String) serverConfig.get("dir_ip");
+        int directoryTcp = (int) serverConfig.get("dir_tcp_port");
+        int ttlSec = (int) serverConfig.get("ttl");
+        String ip = (String) serverConfig.get("ip");
 
         if(!RegistryService.validName(serverName)) throw new IllegalArgumentException("Ugyldigt navn: " + serverName);
 
@@ -75,8 +86,6 @@ public class Servermain
         CatalogServer srv = new CatalogServer(servicePort, catalog);
         srv.start();
 
-        // Determine IP address
-        String ip = System.getenv().getOrDefault("VINYL_IP", "127.0.0.1");
 
         // Register server with directory
         sendToDirectory("REGISTER",serverName,ip,ttlSec,directoryHost,directoryTcp);

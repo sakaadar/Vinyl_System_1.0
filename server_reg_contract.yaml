@@ -1,0 +1,9 @@
+# server_reg_contract.yaml
+server:
+  dir_ip: "localhost"
+  dir_tcp_port: 5044
+  dir_udp_port: 4555
+  server_name: "Happy_music.group3.pro2"
+  ip: "127.0.0.1"
+  ttl: 3600
+  port: 7070
