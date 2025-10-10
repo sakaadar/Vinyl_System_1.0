@@ -4,32 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1ae025cd-2c48-46a9-b460-4cc63618166f" name="Changes" comment="JavaDoc added">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.agent.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dbnavigator.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/Model/Registration.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/Model/Track.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/Util/JsonUtils.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/client/ClientApp.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/client/DirectoryClient.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/client/VinylServerClient.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/directory/DirectoryMain.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/directory/DirectoryTCPServer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/directory/DirectoryUDPServer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/directory/RegistryService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/directory/StatusCodes.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/directory/StatusExeption.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/server/CatalogServer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/via/vinylsystem/server/Servermain.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/via/vinylsystem/SmokeTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/via/vinylsystem/UDPTest.java" beforeDir="false" />
-    </list>
+    <list default="true" id="7333d460-7d8f-420d-8eeb-f6ce1d722c99" name="Changes" comment="added yaml config file" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -90,13 +65,12 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "JavaDoc",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.LookupDemo">
     <configuration name="LookupDemo" type="Application" factoryName="Application" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="via.vinylsystem.client.LookupDemo" />
       <module name="vinyl_directory" />

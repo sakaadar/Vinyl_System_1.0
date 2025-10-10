@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"via.vinylsystem.client"},{"l":"via.vinylsystem.directory"},{"l":"via.vinylsystem.Model"},{"l":"via.vinylsystem.server"},{"l":"via.vinylsystem.Util"}];updateSearchResults();
