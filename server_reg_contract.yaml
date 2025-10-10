@@ -5,5 +5,5 @@ server:
   dir_udp_port: 4555
   server_name: "Happy_music.group3.pro2"
   ip: "127.0.0.1"
-  ttl: 3600
+  ttl: 180
   port: 6000

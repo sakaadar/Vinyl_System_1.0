@@ -2,10 +2,12 @@ package via.vinylsystem.directory;
 
 import via.vinylsystem.Util.AuditLog;
 import via.vinylsystem.Util.FileAuditLog;
+import via.vinylsystem.Util.yamlLoader;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Map;
 
 /**
  * Main entry point for the Directory Service application.
@@ -48,10 +50,16 @@ public class DirectoryMain
      */
     public static void main(String[] args) throws IOException
     {
-        int tcpPort = 5044;
-        int udpPort = 4555;
-
-        long defaultTtlSec = 3600;
+        Map<String, Object> config;
+        try {
+            config = yamlLoader.loadConfig("server_reg_contract.yaml");
+        } catch (Exception e) {
+            throw new IOException("Failed to load YAML config: " + e.getMessage(), e);
+        }
+        Map<String, Object> serverConfig = (Map<String, Object>) config.get("server");
+        int tcpPort = ((Number) serverConfig.getOrDefault("dir_tcp_port",5044)).intValue();
+        int udpPort = ((Number) serverConfig.getOrDefault("dir_udp_port",4555)).intValue();
+        long defaultTtlSec = ((Number) serverConfig.getOrDefault("ttl",3600)).longValue();
 
         Path auditPath = Path.of("./directory-audit.jsonl");
         AuditLog audit = new FileAuditLog(auditPath);

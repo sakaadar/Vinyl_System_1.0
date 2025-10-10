@@ -14,3 +14,6 @@
 {"tsMillis":1760043880539,"ts":"2025-10-09T21:04:40.539Z","type":"ERROR","origin":"UDP","details":"exception: StatusExeption null"}
 {"tsMillis":1760044150081,"ts":"2025-10-09T21:09:10.081Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
 {"tsMillis":1760044178549,"ts":"2025-10-09T21:09:38.549Z","type":"INVALIDATE","origin":"UDP","details":"empty NAME"}
+{"tsMillis":1760094727846,"ts":"2025-10-10T11:12:07.846Z","type":"REGISTER","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3600,"origin":"TCP","details":"OK"}
+{"tsMillis":1760094751420,"ts":"2025-10-10T11:12:31.420Z","type":"ERROR","origin":"UDP","details":"exception: StatusExeption null"}
+{"tsMillis":1760094766298,"ts":"2025-10-10T11:12:46.298Z","type":"LOOKUP","name":"Happy_music.group3.pro2","ip":"127.0.0.1","ttlSec":3562,"origin":"UDP","details":"FOUND"}
